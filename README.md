@@ -11,6 +11,16 @@ The Flutter app (`../scotland-app`) and admin dashboard (`../scotland-admin-pane
 3. Copy `.env.example` to `.env` and fill in the database values.
 4. Make sure PostgreSQL is running and the database in `DB_NAME` exists.
 
+## Database
+
+```powershell
+npm run migration:run     # apply schema
+npm run seed               # demo data (dev only; refuses if users exist)
+$env:SEED_RESET="true"; npm run seed   # wipe and reseed (dev only)
+```
+
+Demo accounts use password from `SEED_DEMO_PASSWORD` (default `DemoPass123`), local only.
+
 ## Run
 
 ```powershell
@@ -28,7 +38,8 @@ npm run lint
 ## Status
 
 - [x] Project scaffold, config validation (Joi), TypeORM wiring, Swagger, health check
-- [ ] Entities and first migration (contract §3)
+- [x] Entities (17 tables, contract §3), first migration, demo seed
+- [ ] Live verification against a production-grade database
 - [ ] Auth and role guards (contract §5.1)
 - [ ] Users, drivers, documents
 - [ ] Rides, offers, lifecycle
