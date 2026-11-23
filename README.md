@@ -50,7 +50,9 @@ npm run lint
 - [x] Entities (17 tables, contract §3), first migration, demo seed
 - [ ] Live verification against a production-grade database
 - [x] Auth: register (passenger, driver), login, refresh rotation with reuse detection, logout, me; global JWT guard; roles guard; login rate limit (contract §5.1)
-- [ ] Users, drivers, documents
+- [x] Drivers: profile, vehicle, online status (gated on approval and five valid documents), location, documents (magic-byte checked), blocks
+- [x] Admin: user list and status, driver list and detail, document review (rejecting takes a driver offline; all decisions audited)
+- [ ] Local object storage is dev-only; production needs a private S3-compatible bucket (decision D7)
 - [ ] Rides, offers, lifecycle
 - [ ] Realtime gateway and chat
 - [ ] Admin endpoints and pricing

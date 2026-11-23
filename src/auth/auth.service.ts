@@ -60,12 +60,18 @@ export class AuthService {
         licenceNumber: dto.licenceNumber ?? null,
         operatingZone: dto.operatingZone,
       });
-      await m.save(Vehicle, {
-        driverId: user.id,
-        makeModel: dto.vehicleMakeModel,
-        plate: dto.vehiclePlate,
-        category: VehicleCategory.FourSeater,
-      });
+      try {
+        await m.save(Vehicle, {
+          driverId: user.id,
+          makeModel: dto.vehicleMakeModel,
+          plate: dto.vehiclePlate,
+          category: VehicleCategory.FourSeater,
+        });
+      } catch (err) {
+        if (isUniqueViolation(err))
+          throw new ConflictException('That number plate is already registered.');
+        throw err;
+      }
       return user.id;
     });
     return this.issueTokens(await this.loadUser(userId));

@@ -16,6 +16,10 @@ export interface Configuration {
     ssl: boolean;
     synchronize: boolean;
   };
+  storage: {
+    dir: string; // local object storage root (dev). Swap for S3 in production.
+    maxUploadBytes: number;
+  };
   jwt: {
     accessSecret: string;
     accessTtl: string; // e.g. '15m'
@@ -44,6 +48,10 @@ export default (): Configuration => {
       ssl: env.DB_SSL === 'true',
       synchronize: env.DB_SYNCHRONIZE === 'true',
     },
+    storage: {
+      dir: env.STORAGE_DIR ?? './storage',
+      maxUploadBytes: Number(env.UPLOAD_MAX_MB ?? 10) * 1024 * 1024,
+    },
     jwt: {
       accessSecret: env.JWT_ACCESS_SECRET ?? '',
       accessTtl: env.JWT_ACCESS_TTL ?? '15m',
@@ -69,4 +77,6 @@ export const validationSchema = Joi.object({
   JWT_ACCESS_TTL: Joi.string().default('15m'),
   JWT_REFRESH_TTL_DAYS: Joi.number().integer().min(1).max(90).default(30),
   AUTH_RATE_LIMIT_PER_MIN: Joi.number().integer().min(1).default(10),
+  STORAGE_DIR: Joi.string().default('./storage'),
+  UPLOAD_MAX_MB: Joi.number().integer().min(1).max(25).default(10),
 }).unknown(true);

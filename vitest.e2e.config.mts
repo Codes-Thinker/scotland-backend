@@ -13,6 +13,7 @@ export default defineConfig({
     env: {
       DB_NAME: 'fnt_test',
       AUTH_RATE_LIMIT_PER_MIN: '10000',
+      STORAGE_DIR: 'tmp/e2e-storage',
     },
     fileParallelism: false,
     testTimeout: 30_000,
