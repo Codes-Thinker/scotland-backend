@@ -57,6 +57,9 @@ npm run lint
 - [ ] Ride distance is straight line times 1.3 until real routing (decision D6)
 - [x] Realtime gateway (Socket.IO at /realtime, JWT on connect, per-user rooms only): ride.offer, ride.status, driver.location, chat.message, alert.new, ready
 - [x] Ride chat (opens on assignment, closes on completion or cancellation; cursor paging) and alerts (list, mark read)
-- [ ] Admin endpoints and pricing
+- [x] Payments: admin list and allowed status transitions (pending to paid or failed, failed to paid, paid to refunded), all audited
+- [x] Pricing: admin view and replace per ride type; old rules kept in history
+- [x] Reports: summary with daily breakdown (UK days, max 366-day range), recent admin activity, driver gross earnings
+- [ ] Commission and driver payouts are not modelled yet; earnings are gross customer fares
 
 Secrets: never commit `.env`. `.gitignore` already excludes it.

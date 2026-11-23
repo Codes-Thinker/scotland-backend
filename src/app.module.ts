@@ -17,6 +17,7 @@ import { RidesModule } from '@/rides/rides.module';
 import { RealtimeModule } from '@/realtime/realtime.module';
 import { AlertsModule } from '@/alerts/alerts.module';
 import { ChatModule } from '@/chat/chat.module';
+import { FinanceModule } from '@/finance/finance.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { ChatModule } from '@/chat/chat.module';
     DriversModule,
     RidesModule,
     ChatModule,
+    FinanceModule,
     AlertsModule,
     RealtimeModule,
     AdminModule,
