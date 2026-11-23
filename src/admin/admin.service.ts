@@ -150,7 +150,8 @@ export class AdminService {
 
     if (q.onlineStatus) qb.andWhere('p.onlineStatus = :online', { online: q.onlineStatus });
     if (q.status) qb.andWhere('u.status = :status', { status: q.status });
-    if (q.zone) qb.andWhere('p.operatingZone = :zone', { zone: q.zone });
+    // Case-insensitive: operators type zones in any case.
+    if (q.zone) qb.andWhere('LOWER(p.operatingZone) = LOWER(:zone)', { zone: q.zone });
     if (q.q) {
       qb.andWhere(
         '(u.name ILIKE :term OR u.email ILIKE :term OR u.phone ILIKE :term OR v.plate ILIKE :term)',

@@ -507,6 +507,14 @@ describe('Drivers and admin API (e2e)', () => {
         .get(`${API}/admin/drivers?zone=Glenrothes`)
         .set('Authorization', `Bearer ${admin}`);
       expect(list.status).toBe(200);
+      const lower = await http()
+        .get(`${API}/admin/drivers?zone=glenrothes`)
+        .set('Authorization', `Bearer ${admin}`);
+      expect(lower.body.total).toBe(list.body.total);
+      const none = await http()
+        .get(`${API}/admin/drivers?zone=Dundee`)
+        .set('Authorization', `Bearer ${admin}`);
+      expect(none.body.total).toBe(0);
       expect(list.body.total).toBe(1);
       expect(list.body.data[0]).toMatchObject({
         documentsVerified: 5,
