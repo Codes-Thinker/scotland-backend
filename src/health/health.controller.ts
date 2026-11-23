@@ -2,12 +2,14 @@ import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import { ApiOkResponse, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { DataSource } from 'typeorm';
+import { Public } from '@/auth/decorators/auth.decorators';
 
 @ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(private readonly dataSource: DataSource) {}
 
+  @Public()
   @Get()
   @ApiOkResponse({ description: 'API and database are reachable' })
   @ApiServiceUnavailableResponse({ description: 'Database is unreachable' })

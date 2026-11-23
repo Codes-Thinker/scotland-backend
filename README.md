@@ -21,6 +21,15 @@ $env:SEED_RESET="true"; npm run seed   # wipe and reseed (dev only)
 
 Demo accounts use password from `SEED_DEMO_PASSWORD` (default `DemoPass123`), local only.
 
+## Tests
+
+```powershell
+npm test               # unit tests
+npm run test:e2e       # end-to-end, against database fnt_test (must exist; never dev)
+```
+
+Create the test database once: `CREATE DATABASE fnt_test OWNER fnt_app;`
+
 ## Run
 
 ```powershell
@@ -40,7 +49,7 @@ npm run lint
 - [x] Project scaffold, config validation (Joi), TypeORM wiring, Swagger, health check
 - [x] Entities (17 tables, contract §3), first migration, demo seed
 - [ ] Live verification against a production-grade database
-- [ ] Auth and role guards (contract §5.1)
+- [x] Auth: register (passenger, driver), login, refresh rotation with reuse detection, logout, me; global JWT guard; roles guard; login rate limit (contract §5.1)
 - [ ] Users, drivers, documents
 - [ ] Rides, offers, lifecycle
 - [ ] Realtime gateway and chat
