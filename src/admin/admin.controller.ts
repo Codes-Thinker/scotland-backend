@@ -6,6 +6,7 @@ import {
   ParseEnumPipe,
   ParseUUIDPipe,
   Patch,
+  Post,
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiForbiddenResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
@@ -22,6 +23,8 @@ import {
 } from './dto/admin.dto';
 import { DocumentView } from '@/drivers/driver-views';
 import { DriverSummary } from '@/drivers/driver-views';
+import { RidesService, RideView } from '@/rides/rides.service';
+import { AdminRidesQueryDto, AssignRideDto } from '@/rides/dto/ride.dto';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -29,7 +32,10 @@ import { DriverSummary } from '@/drivers/driver-views';
 @ApiForbiddenResponse({ description: 'Admin role required' })
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(
+    private readonly admin: AdminService,
+    private readonly rides: RidesService,
+  ) {}
 
   @Get('users')
   @ApiOkResponse({ description: 'Paged user list' })
@@ -66,5 +72,27 @@ export class AdminController {
     @Body() dto: ReviewDocumentDto,
   ): Promise<DocumentView> {
     return this.admin.reviewDocument(actor, id, type, dto);
+  }
+
+  @Get('rides')
+  @ApiOkResponse({ description: 'Paged ride list' })
+  listRides(@Query() query: AdminRidesQueryDto): Promise<Paged<RideView>> {
+    return this.rides.listAll(query);
+  }
+
+  @Get('dispatch/queue')
+  @ApiOkResponse({ description: 'Requested rides waiting for a driver, most urgent first' })
+  dispatchQueue() {
+    return this.rides.dispatchQueue();
+  }
+
+  @Post('rides/:id/assign')
+  @ApiOkResponse({ description: 'Driver assigned by operations' })
+  assignRide(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AssignRideDto,
+  ): Promise<RideView> {
+    return this.rides.assign(actor, id, dto.driverId);
   }
 }

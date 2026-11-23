@@ -16,6 +16,13 @@ export interface Configuration {
     ssl: boolean;
     synchronize: boolean;
   };
+  dispatch: {
+    sweepMs: number; // 0 disables the background sweeper (tests)
+    offerSeconds: number;
+    radiusKm: number;
+    maxOffers: number;
+    locationMaxAgeSec: number;
+  };
   storage: {
     dir: string; // local object storage root (dev). Swap for S3 in production.
     maxUploadBytes: number;
@@ -48,6 +55,13 @@ export default (): Configuration => {
       ssl: env.DB_SSL === 'true',
       synchronize: env.DB_SYNCHRONIZE === 'true',
     },
+    dispatch: {
+      sweepMs: Number(env.DISPATCH_SWEEP_MS ?? 5000),
+      offerSeconds: Number(env.DISPATCH_OFFER_SECONDS ?? 20),
+      radiusKm: Number(env.DISPATCH_RADIUS_KM ?? 15),
+      maxOffers: Number(env.DISPATCH_MAX_OFFERS ?? 3),
+      locationMaxAgeSec: Number(env.DISPATCH_LOCATION_MAX_AGE_SEC ?? 600),
+    },
     storage: {
       dir: env.STORAGE_DIR ?? './storage',
       maxUploadBytes: Number(env.UPLOAD_MAX_MB ?? 10) * 1024 * 1024,
@@ -78,5 +92,10 @@ export const validationSchema = Joi.object({
   JWT_REFRESH_TTL_DAYS: Joi.number().integer().min(1).max(90).default(30),
   AUTH_RATE_LIMIT_PER_MIN: Joi.number().integer().min(1).default(10),
   STORAGE_DIR: Joi.string().default('./storage'),
+  DISPATCH_SWEEP_MS: Joi.number().integer().min(0).default(5000),
+  DISPATCH_OFFER_SECONDS: Joi.number().integer().min(5).max(120).default(20),
+  DISPATCH_RADIUS_KM: Joi.number().min(1).max(100).default(15),
+  DISPATCH_MAX_OFFERS: Joi.number().integer().min(1).max(10).default(3),
+  DISPATCH_LOCATION_MAX_AGE_SEC: Joi.number().integer().min(30).default(600),
   UPLOAD_MAX_MB: Joi.number().integer().min(1).max(25).default(10),
 }).unknown(true);

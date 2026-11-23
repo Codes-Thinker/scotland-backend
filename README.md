@@ -53,7 +53,8 @@ npm run lint
 - [x] Drivers: profile, vehicle, online status (gated on approval and five valid documents), location, documents (magic-byte checked), blocks
 - [x] Admin: user list and status, driver list and detail, document review (rejecting takes a driver offline; all decisions audited)
 - [ ] Local object storage is dev-only; production needs a private S3-compatible bucket (decision D7)
-- [ ] Rides, offers, lifecycle
+- [x] Rides: estimate (road distance estimated from coordinates), booking, dispatch to up to 3 nearest eligible drivers with 20 s offers, first accept wins, sweep for expiry and retries, assigned/arrived/in progress/completed, cancel, rating, admin queue and assign
+- [ ] Ride distance is straight line times 1.3 until real routing (decision D6)
 - [ ] Realtime gateway and chat
 - [ ] Admin endpoints and pricing
 

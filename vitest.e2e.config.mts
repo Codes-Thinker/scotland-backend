@@ -14,6 +14,8 @@ export default defineConfig({
       DB_NAME: 'fnt_test',
       AUTH_RATE_LIMIT_PER_MIN: '10000',
       STORAGE_DIR: 'tmp/e2e-storage',
+      DISPATCH_SWEEP_MS: '0',
+      GLOBAL_RATE_LIMIT_PER_MIN: '100000',
     },
     fileParallelism: false,
     testTimeout: 30_000,

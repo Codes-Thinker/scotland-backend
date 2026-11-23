@@ -13,6 +13,7 @@ import { AuditModule } from '@/audit/audit.module';
 import { StorageModule } from '@/storage/storage.module';
 import { DriversModule } from '@/drivers/drivers.module';
 import { AdminModule } from '@/admin/admin.module';
+import { RidesModule } from '@/rides/rides.module';
 
 @Module({
   imports: [
@@ -22,7 +23,10 @@ import { AdminModule } from '@/admin/admin.module';
       validationSchema,
     }),
     // Global default: 100 requests per minute per IP. Auth routes are stricter.
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
+    // Read from env at load time; the e2e run raises it so one test process is not throttled.
+    ThrottlerModule.forRoot([
+      { ttl: 60_000, limit: Number(process.env.GLOBAL_RATE_LIMIT_PER_MIN ?? 100) },
+    ]),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService<Configuration, true>) =>
@@ -32,6 +36,7 @@ import { AdminModule } from '@/admin/admin.module';
     StorageModule,
     AuthModule,
     DriversModule,
+    RidesModule,
     AdminModule,
     HealthModule,
   ],
