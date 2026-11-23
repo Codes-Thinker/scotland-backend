@@ -17,6 +17,7 @@ import { PricingRule } from '@/database/entities/ops.entity';
 import { RideOffer, Ride, RideRating } from '@/database/entities/ride.entity';
 import {
   AccountStatus,
+  AlertType,
   BookingMode,
   DispatchPriority,
   DriverOnlineStatus,
@@ -28,6 +29,8 @@ import {
   UserRole,
   VehicleCategory,
 } from '@/database/enums';
+import { AlertsService } from '@/alerts/alerts.service';
+import { RealtimeService } from '@/realtime/realtime.service';
 import { DispatchService } from './dispatch.service';
 import { estimateRoadMeters, haversineMeters, priceFare } from './geo-pricing';
 import type {
@@ -39,6 +42,22 @@ import type {
   ListRidesQueryDto,
   RateRideDto,
 } from './dto/ride.dto';
+
+/** Alerts sent on a status change when no specific alert is given. */
+const STANDARD_NOTICES: Partial<
+  Record<RideStatus, { to: 'passenger'; title: string; body: string }>
+> = {
+  [RideStatus.Arrived]: {
+    to: 'passenger',
+    title: 'Your driver has arrived',
+    body: 'Please meet your driver at the pickup point.',
+  },
+  [RideStatus.Completed]: {
+    to: 'passenger',
+    title: 'Ride completed',
+    body: 'Thanks for riding. Please rate your driver.',
+  },
+};
 
 const ACTIVE_STATUSES = [
   RideStatus.Requested,
@@ -99,6 +118,8 @@ export class RidesService {
     private readonly dataSource: DataSource,
     private readonly dispatch: DispatchService,
     private readonly audit: AuditService,
+    private readonly alerts: AlertsService,
+    private readonly realtime: RealtimeService,
     @InjectRepository(Ride) private readonly rides: Repository<Ride>,
     @InjectRepository(RideOffer) private readonly offers: Repository<RideOffer>,
     @InjectRepository(RideRating) private readonly ratings: Repository<RideRating>,
@@ -237,6 +258,11 @@ export class RidesService {
       }
       return ride.id;
     });
+    await this.publish(result, RideStatus.Cancelled, {
+      to: 'driver',
+      title: 'Ride cancelled',
+      body: 'The passenger or operations cancelled this ride.',
+    });
     return this.toView(await this.loadRide(result), isAdmin ? 'admin' : 'passenger');
   }
 
@@ -346,6 +372,11 @@ export class RidesService {
       profile.onlineStatus = DriverOnlineStatus.OnTrip;
       await m.save(profile);
     });
+    await this.publish(rideId, RideStatus.Assigned, {
+      to: 'passenger',
+      title: 'Driver on the way',
+      body: 'Your driver has accepted and is heading to pickup.',
+    });
     return this.toView(await this.loadRide(rideId), 'driver');
   }
 
@@ -405,6 +436,7 @@ export class RidesService {
       profile.ridesCount += 1;
       await m.save(profile);
     });
+    await this.publish(rideId, RideStatus.Completed);
     return this.toView(await this.loadRide(rideId), 'driver');
   }
 
@@ -502,6 +534,11 @@ export class RidesService {
         payload: { driverId },
       });
     });
+    await this.publish(rideId, RideStatus.Assigned, {
+      to: 'passenger',
+      title: 'Driver assigned',
+      body: 'Operations has assigned a driver to your ride.',
+    });
     return this.toView(await this.loadRide(rideId), 'admin');
   }
 
@@ -523,7 +560,25 @@ export class RidesService {
       stamp(ride);
       await m.save(ride);
     });
+    await this.publish(rideId, to);
     return this.toView(await this.loadRide(rideId), 'driver');
+  }
+
+  /** Pushes the new status to both parties and sends a standard alert where one applies. */
+  private async publish(
+    rideId: string,
+    status: RideStatus,
+    alertFor?: { to: 'passenger' | 'driver'; title: string; body: string },
+  ): Promise<void> {
+    const ride = await this.loadRide(rideId);
+    const payload = { rideId, status, at: new Date() };
+    this.realtime.toUser(ride.passengerId, 'ride.status', payload);
+    if (ride.driverId) this.realtime.toUser(ride.driverId, 'ride.status', payload);
+
+    const notice = alertFor ?? STANDARD_NOTICES[status];
+    if (!notice) return;
+    const target = notice.to === 'passenger' ? ride.passengerId : ride.driverId;
+    if (target) await this.alerts.notify(target, AlertType.Ride, notice.title, notice.body);
   }
 
   private async lockRide(m: EntityManager, id: string): Promise<Ride | null> {

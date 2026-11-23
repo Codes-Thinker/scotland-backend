@@ -181,6 +181,8 @@ Rules:
 
 ## 6. Realtime (WebSocket gateway, namespace `/realtime`)
 
+Implementation note: every event is sent to the recipient's user room `user:<id>`. Clients do not join ride rooms. Connections authenticate with the access token in `auth.token`.
+
 Auth: JWT in the handshake. Rooms per user (`user:<id>`) and per ride (`ride:<id>`).
 
 | Event | Direction | Payload (summary) |

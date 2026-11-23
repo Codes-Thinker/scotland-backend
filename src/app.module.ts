@@ -14,6 +14,9 @@ import { StorageModule } from '@/storage/storage.module';
 import { DriversModule } from '@/drivers/drivers.module';
 import { AdminModule } from '@/admin/admin.module';
 import { RidesModule } from '@/rides/rides.module';
+import { RealtimeModule } from '@/realtime/realtime.module';
+import { AlertsModule } from '@/alerts/alerts.module';
+import { ChatModule } from '@/chat/chat.module';
 
 @Module({
   imports: [
@@ -37,6 +40,9 @@ import { RidesModule } from '@/rides/rides.module';
     AuthModule,
     DriversModule,
     RidesModule,
+    ChatModule,
+    AlertsModule,
+    RealtimeModule,
     AdminModule,
     HealthModule,
   ],

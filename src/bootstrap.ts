@@ -1,6 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
 import helmet from 'helmet';
@@ -13,6 +14,7 @@ export async function createApp(): Promise<INestApplication> {
   const config = app.get(ConfigService<Configuration, true>);
   const { env, apiPrefix, corsOrigins } = config.get('app', { infer: true });
 
+  app.useWebSocketAdapter(new IoAdapter(app));
   app.setGlobalPrefix(apiPrefix, { exclude: ['health'] });
   app.use(helmet());
   app.use(compression());

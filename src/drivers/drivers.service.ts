@@ -11,7 +11,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import type { Configuration } from '@/config/configuration';
 import {
   Block,
@@ -26,10 +26,13 @@ import {
   DriverDocumentStatus,
   DriverDocumentType,
   DriverOnlineStatus,
+  RideStatus,
   UserRole,
   VehicleCategory,
 } from '@/database/enums';
 import { OBJECT_STORAGE, type ObjectStorage } from '@/storage/object-storage';
+import { RealtimeService } from '@/realtime/realtime.service';
+import { Ride } from '@/database/entities/ride.entity';
 import { detectDocumentMime, DOCUMENT_EXTENSIONS } from './document-file';
 import {
   allDocumentsValid,
@@ -78,7 +81,9 @@ export class DriversService {
     @InjectRepository(DriverDocument) private readonly documents: Repository<DriverDocument>,
     @InjectRepository(DriverLocation) private readonly locations: Repository<DriverLocation>,
     @InjectRepository(Block) private readonly blocks: Repository<Block>,
+    @InjectRepository(Ride) private readonly rides: Repository<Ride>,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
+    private readonly realtime: RealtimeService,
     private readonly config: ConfigService<Configuration, true>,
   ) {}
 
@@ -166,6 +171,22 @@ export class DriversService {
       },
       ['driverId'],
     );
+    // Tell the passenger on an active ride where the driver is.
+    const active = await this.rides.findOne({
+      where: {
+        driverId,
+        status: In([RideStatus.Assigned, RideStatus.Arrived, RideStatus.InProgress]),
+      },
+    });
+    if (active) {
+      this.realtime.toUser(active.passengerId, 'driver.location', {
+        rideId: active.id,
+        lat: dto.lat,
+        lng: dto.lng,
+        heading: dto.heading ?? null,
+        at: new Date(),
+      });
+    }
   }
 
   // ---- documents ----

@@ -9,12 +9,14 @@ import {
 import { PricingRule } from '@/database/entities/ops.entity';
 import { Payment } from '@/database/entities/payment.entity';
 import { Ride, RideOffer, RideRating } from '@/database/entities/ride.entity';
+import { AlertsModule } from '@/alerts/alerts.module';
 import { DispatchService } from './dispatch.service';
 import { DriverOffersController, RidesController } from './rides.controller';
 import { RidesService } from './rides.service';
 
 @Module({
   imports: [
+    AlertsModule,
     TypeOrmModule.forFeature([
       Ride,
       RideOffer,

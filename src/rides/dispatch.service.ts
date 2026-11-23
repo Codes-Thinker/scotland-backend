@@ -18,6 +18,7 @@ import {
   RideStatus,
 } from '@/database/enums';
 import { allDocumentsValid } from '@/drivers/driver-views';
+import { RealtimeService } from '@/realtime/realtime.service';
 import { haversineMeters } from './geo-pricing';
 
 /** Stalled requests are retried for this long, then left for admin dispatch. */
@@ -36,6 +37,7 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly config: ConfigService<Configuration, true>,
+    private readonly realtime: RealtimeService,
     @InjectRepository(Ride) private readonly rides: Repository<Ride>,
     @InjectRepository(RideOffer) private readonly offers: Repository<RideOffer>,
     @InjectRepository(DriverProfile) private readonly profiles: Repository<DriverProfile>,
@@ -116,7 +118,7 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
 
     if (candidates.length === 0) return 0;
 
-    await this.offers.save(
+    const saved = await this.offers.save(
       candidates.map((c) =>
         this.offers.create({
           rideId,
@@ -126,6 +128,17 @@ export class DispatchService implements OnModuleInit, OnModuleDestroy {
         }),
       ),
     );
+    for (const o of saved) {
+      this.realtime.toUser(o.driverId, 'ride.offer', {
+        offerId: o.id,
+        rideId,
+        rideType: ride.rideType,
+        pickup: { address: ride.pickupAddress, lat: ride.pickupLat, lng: ride.pickupLng },
+        drop: { address: ride.dropAddress, lat: ride.dropLat, lng: ride.dropLng },
+        fareEstimatePence: ride.fareEstimatePence,
+        expiresAt: o.expiresAt,
+      });
+    }
     return candidates.length;
   }
 

@@ -55,7 +55,8 @@ npm run lint
 - [ ] Local object storage is dev-only; production needs a private S3-compatible bucket (decision D7)
 - [x] Rides: estimate (road distance estimated from coordinates), booking, dispatch to up to 3 nearest eligible drivers with 20 s offers, first accept wins, sweep for expiry and retries, assigned/arrived/in progress/completed, cancel, rating, admin queue and assign
 - [ ] Ride distance is straight line times 1.3 until real routing (decision D6)
-- [ ] Realtime gateway and chat
+- [x] Realtime gateway (Socket.IO at /realtime, JWT on connect, per-user rooms only): ride.offer, ride.status, driver.location, chat.message, alert.new, ready
+- [x] Ride chat (opens on assignment, closes on completion or cancellation; cursor paging) and alerts (list, mark read)
 - [ ] Admin endpoints and pricing
 
 Secrets: never commit `.env`. `.gitignore` already excludes it.
