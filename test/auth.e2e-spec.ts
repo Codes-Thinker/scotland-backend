@@ -236,6 +236,23 @@ describe('Auth API (e2e)', () => {
       expect(newer.status).toBe(401);
     });
 
+    it('lets only one of two simultaneous refreshes succeed, and ends the session for the other', async () => {
+      const reg = await registerPassenger();
+      const token = reg.body.refreshToken as string;
+      const [a, b] = await Promise.all([
+        http.post('/api/v1/auth/refresh').send({ refreshToken: token }),
+        http.post('/api/v1/auth/refresh').send({ refreshToken: token }),
+      ]);
+      expect([a.status, b.status].sort()).toEqual([200, 401]);
+
+      const winner = a.status === 200 ? a : b;
+      // The reuse detection revoked everything, including the winner's fresh token.
+      const after = await http
+        .post('/api/v1/auth/refresh')
+        .send({ refreshToken: winner.body.refreshToken });
+      expect(after.status).toBe(401);
+    });
+
     it('rejects an unknown refresh token', async () => {
       const res = await http.post('/api/v1/auth/refresh').send({ refreshToken: 'x'.repeat(40) });
       expect(res.status).toBe(401);

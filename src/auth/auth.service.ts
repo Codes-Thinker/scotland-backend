@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomBytes } from 'crypto';
-import { DataSource, EntityManager, IsNull, Repository } from 'typeorm';
+import { DataSource, EntityManager, IsNull, MoreThan, Repository } from 'typeorm';
 import type { Configuration } from '@/config/configuration';
 import { hashPassword, verifyPassword } from '@/common/password';
 import { DriverProfile, User, Vehicle } from '@/database/entities/account.entity';
@@ -90,29 +90,29 @@ export class AuthService {
 
   /** Rotates the refresh token. Reusing a revoked token signals theft: all sessions end. */
   async refresh(rawToken: string): Promise<TokensResponse> {
-    const row = await this.refreshTokens.findOne({
-      where: { tokenHash: this.hashToken(rawToken) },
-    });
+    const hash = this.hashToken(rawToken);
     const now = new Date();
 
-    if (!row) throw new UnauthorizedException('Session expired. Please sign in again.');
-
-    if (row.revokedAt) {
-      await this.refreshTokens.update(
-        { userId: row.userId, revokedAt: IsNull() },
-        { revokedAt: now },
-      );
+    // Claim the token atomically: only one concurrent request can flip revoked_at from NULL.
+    const claimed = await this.refreshTokens.update(
+      { tokenHash: hash, revokedAt: IsNull(), expiresAt: MoreThan(now) },
+      { revokedAt: now },
+    );
+    if (claimed.affected !== 1) {
+      const row = await this.refreshTokens.findOne({ where: { tokenHash: hash } });
+      // A token that exists but is already revoked was used twice: end every session for that user.
+      if (row?.revokedAt) {
+        await this.refreshTokens.update(
+          { userId: row.userId, revokedAt: IsNull() },
+          { revokedAt: now },
+        );
+      }
       throw new UnauthorizedException('Session expired. Please sign in again.');
     }
-    if (row.expiresAt.getTime() <= now.getTime()) {
-      throw new UnauthorizedException('Session expired. Please sign in again.');
-    }
 
+    const row = await this.refreshTokens.findOneOrFail({ where: { tokenHash: hash } });
     const user = await this.loadUser(row.userId);
     this.assertNotSuspended(user);
-
-    row.revokedAt = now;
-    await this.refreshTokens.save(row);
     return this.issueTokens(user);
   }
 

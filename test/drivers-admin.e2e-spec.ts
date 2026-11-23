@@ -523,6 +523,41 @@ describe('Drivers and admin API (e2e)', () => {
       );
     });
 
+    it('lets an admin view an uploaded document, audits it, and 404s when none exists', async () => {
+      const admin = await makeAdmin();
+      const d = await registerDriver('view1@example.com');
+      const missing = await http()
+        .get(`${API}/admin/drivers/${d.id}/documents/licence/file`)
+        .set('Authorization', `Bearer ${admin}`);
+      expect(missing.status).toBe(404);
+
+      await upload(d.token, 'licence', PDF, 'licence.pdf');
+      const res = await http()
+        .get(`${API}/admin/drivers/${d.id}/documents/licence/file`)
+        .set('Authorization', `Bearer ${admin}`)
+        .buffer(true)
+        .parse((r, cb) => {
+          const chunks: Buffer[] = [];
+          r.on('data', (c: Buffer) => chunks.push(c));
+          r.on('end', () => cb(null, Buffer.concat(chunks)));
+        });
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toBe('application/pdf');
+      expect(res.headers['cache-control']).toBe('private, no-store');
+      expect(res.headers['x-content-type-options']).toBe('nosniff');
+      expect(Buffer.from(res.body as Buffer).equals(PDF)).toBe(true);
+
+      const audit = await AppDataSource.query(
+        "SELECT count(*)::int AS n FROM audit_log WHERE action = 'driver_document.viewed'",
+      );
+      expect(audit[0].n).toBe(1);
+
+      const driverTry = await http()
+        .get(`${API}/admin/drivers/${d.id}/documents/licence/file`)
+        .set('Authorization', `Bearer ${d.token}`);
+      expect(driverTry.status).toBe(403);
+    });
+
     it('suspending a driver takes them offline and locks them out', async () => {
       const admin = await makeAdmin();
       const d = await registerDriver('susp@example.com');

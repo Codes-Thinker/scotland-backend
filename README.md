@@ -44,6 +44,19 @@ npm run lint
 - Swagger UI: `http://localhost:3000/docs` (not served in production)
 - API base path: `/api/v1`
 
+## Production checklist
+
+The app refuses to start in production unless these hold:
+
+- `STORAGE_DRIVER=s3` with `S3_BUCKET` and `AWS_REGION` (documents never touch local disk)
+- `DB_SSL=true` with certificate verification on (`DB_SSL_REJECT_UNAUTHORIZED` defaults to true)
+- `DB_SYNCHRONIZE=false` (schema changes only through migrations)
+- `JWT_ACCESS_SECRET` of at least 32 random characters
+
+Also set `TRUST_PROXY` to the number of reverse proxies in front of the API so rate limits see real client addresses. Swagger is not served in production.
+
+Run exactly one API instance until the dispatch sweeper is moved to a single scheduler (each instance currently runs its own sweep).
+
 ## Status
 
 - [x] Project scaffold, config validation (Joi), TypeORM wiring, Swagger, health check
@@ -52,7 +65,9 @@ npm run lint
 - [x] Auth: register (passenger, driver), login, refresh rotation with reuse detection, logout, me; global JWT guard; roles guard; login rate limit (contract §5.1)
 - [x] Drivers: profile, vehicle, online status (gated on approval and five valid documents), location, documents (magic-byte checked), blocks
 - [x] Admin: user list and status, driver list and detail, document review (rejecting takes a driver offline; all decisions audited)
-- [ ] Local object storage is dev-only; production needs a private S3-compatible bucket (decision D7)
+- [x] Storage: S3 adapter (D7) selected by STORAGE_DRIVER; local disk is development only
+- [x] Admin can view uploaded driver documents (audited, never cached)
+- [x] Refresh-token rotation is atomic; a double-used token ends the user's sessions
 - [x] Rides: estimate (road distance estimated from coordinates), booking, dispatch to up to 3 nearest eligible drivers with 20 s offers, first accept wins, sweep for expiry and retries, assigned/arrived/in progress/completed, cancel, rating, admin queue and assign
 - [ ] Ride distance is straight line times 1.3 until real routing (decision D6)
 - [x] Realtime gateway (Socket.IO at /realtime, JWT on connect, per-user rooms only): ride.offer, ride.status, driver.location, chat.message, alert.new, ready

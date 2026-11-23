@@ -17,7 +17,7 @@ export function buildDataSourceOptions(
     username: db.username,
     password: db.password,
     database: db.name,
-    ssl: db.ssl ? { rejectUnauthorized: false } : false,
+    ssl: db.ssl ? { rejectUnauthorized: db.sslRejectUnauthorized } : false,
     entities: ENTITIES,
     migrations: [__dirname + '/migrations/*{.ts,.js}'],
     migrationsRun: false,

@@ -7,6 +7,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuditService } from '@/audit/audit.service';
+import { OBJECT_STORAGE, type ObjectStorage } from '@/storage/object-storage';
+import { Inject } from '@nestjs/common';
 import { paginate, Paged } from '@/common/pagination';
 import { DriversService } from '@/drivers/drivers.service';
 import {
@@ -25,6 +27,12 @@ import {
 } from '@/database/enums';
 import type { AuthUser } from '@/auth/auth.types';
 import type { AdminDriversQueryDto, AdminUsersQueryDto, ReviewDocumentDto } from './dto/admin.dto';
+
+const CONTENT_TYPES: Record<string, string> = {
+  pdf: 'application/pdf',
+  jpg: 'image/jpeg',
+  png: 'image/png',
+};
 
 export interface UserSummary {
   id: string;
@@ -48,7 +56,33 @@ export class AdminService {
     @InjectRepository(DriverDocument) private readonly documents: Repository<DriverDocument>,
     private readonly drivers: DriversService,
     private readonly audit: AuditService,
+    @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
+
+  /** Returns a driver document for review. Every view is audited. */
+  async documentFile(
+    actor: AuthUser,
+    driverId: string,
+    type: DriverDocumentType,
+  ): Promise<{ body: Buffer; contentType: string; filename: string }> {
+    const row = await this.documents.findOne({ where: { driverId, type } });
+    if (!row?.fileKey) throw new NotFoundException('No file has been uploaded for that document.');
+
+    const body = await this.storage.get(row.fileKey);
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'driver_document.viewed',
+      entity: 'driver_document',
+      entityId: row.id,
+      payload: { driverId, type },
+    });
+    const ext = row.fileKey.slice(row.fileKey.lastIndexOf('.') + 1);
+    return {
+      body,
+      contentType: CONTENT_TYPES[ext] ?? 'application/octet-stream',
+      filename: `${type}-${driverId.slice(0, 8)}.${ext}`,
+    };
+  }
 
   // ---- users ----
 

@@ -15,6 +15,8 @@ export async function createApp(): Promise<INestApplication> {
   const { env, apiPrefix, corsOrigins } = config.get('app', { infer: true });
 
   app.useWebSocketAdapter(new IoAdapter(app));
+  const http = app.getHttpAdapter().getInstance() as { set(name: string, value: unknown): void };
+  http.set('trust proxy', config.get('app.trustProxy', { infer: true }));
   app.setGlobalPrefix(apiPrefix, { exclude: ['health'] });
   app.use(helmet());
   app.use(compression());

@@ -16,6 +16,10 @@ export class LocalObjectStorage implements ObjectStorage {
     await fs.writeFile(target, body, { flag: 'wx' });
   }
 
+  async get(key: string): Promise<Buffer> {
+    return fs.readFile(this.resolve(key));
+  }
+
   async delete(key: string): Promise<void> {
     try {
       await fs.unlink(this.resolve(key));

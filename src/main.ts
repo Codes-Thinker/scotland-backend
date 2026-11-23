@@ -5,6 +5,7 @@ import type { Configuration } from '@/config/configuration';
 
 async function bootstrap(): Promise<void> {
   const app = await createApp();
+  app.enableShutdownHooks();
   const config = app.get(ConfigService<Configuration, true>);
   const { env, port, apiPrefix } = config.get('app', { infer: true });
 

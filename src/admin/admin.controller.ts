@@ -8,8 +8,10 @@ import {
   Patch,
   Post,
   Query,
+  Res,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiForbiddenResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { CurrentUser, Roles } from '@/auth/decorators/auth.decorators';
 import type { AuthUser } from '@/auth/auth.types';
 import { Paged } from '@/common/pagination';
@@ -62,6 +64,22 @@ export class AdminController {
   @ApiOkResponse({ description: 'Driver with all five documents' })
   getDriver(@Param('id', ParseUUIDPipe) id: string): Promise<DriverDetail> {
     return this.admin.getDriver(id);
+  }
+
+  @Get('drivers/:id/documents/:type/file')
+  @ApiOkResponse({ description: 'The uploaded file, inline; never cached' })
+  async documentFile(
+    @CurrentUser() actor: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('type', new ParseEnumPipe(DriverDocumentType)) type: DriverDocumentType,
+    @Res() res: Response,
+  ): Promise<void> {
+    const file = await this.admin.documentFile(actor, id, type);
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader('Content-Disposition', `inline; filename="${file.filename}"`);
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.send(file.body);
   }
 
   @Patch('drivers/:id/documents/:type')
