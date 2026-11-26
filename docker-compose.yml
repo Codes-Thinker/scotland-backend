@@ -1,0 +1,24 @@
+# Local Postgres matching .env.example defaults (port 5432).
+# Optional — this machine already uses Homebrew Postgres on 5433 via backend/.env.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fnt-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: fnt_app
+      POSTGRES_PASSWORD: fnt_local_dev
+      POSTGRES_DB: fnt_dev
+    volumes:
+      - fnt_pg_data:/var/lib/postgresql/data
+      - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U fnt_app -d fnt_dev']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  fnt_pg_data:
