@@ -1,6 +1,7 @@
 # Fife Nearby Taxis — Backend
 
-NestJS 12 + PostgreSQL + TypeORM. The API contract is in [docs/API_CONTRACT.md](docs/API_CONTRACT.md).
+NestJS 12 + PostgreSQL + TypeORM. The API contract is in [docs/API_CONTRACT.md](docs/API_CONTRACT.md).  
+**Going live?** Follow [docs/LIVE_BACKEND_HANDOFF.md](docs/LIVE_BACKEND_HANDOFF.md) (full deploy checklist for the backend developer).
 
 The Flutter app (`../scotland-app`) and admin dashboard (`../scotland-admin-panel`) still use local mock data. They will be switched to this API in a later step.
 

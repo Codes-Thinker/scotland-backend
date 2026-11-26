@@ -8,13 +8,10 @@
 npm-debug.log*
 
 # env (never commit real values)
-.env
-.env.*
 !.env.example
 
 # IDE / OS
 .idea
-.vscode
 .DS_Store
 
 # tests
@@ -26,3 +23,4 @@ tmp/
 
 # uploaded driver documents (local storage)
 /storage
+config.bat
